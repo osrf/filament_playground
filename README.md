@@ -31,6 +31,8 @@ Testing:
 ./out/cmake-release/samples/suzanne
 ```
 
+![A first sample](images/suzane.png)
+
 References:
   * [Building Filament](https://github.com/google/filament/blob/main/BUILDING.md)
 
