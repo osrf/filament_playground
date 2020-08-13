@@ -2,7 +2,7 @@
 
 A place to play with Google Filament.
 
-## Filament instalation
+## Filament installation
 
 Clone the Filament repository:
 
@@ -72,7 +72,7 @@ And now you can run it:
 ./out/cmake-release/samples/suzanne
 ```
 
-![A modified sample](images/modified_suzane.png)
+![A modified sample](images/modified_suzanne.png)
 
 ### Note about meshes
 
