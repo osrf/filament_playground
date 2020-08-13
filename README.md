@@ -38,6 +38,44 @@ References:
 
 ## Creating a custom scene
 
+First, we'll need to copy some model assets. Clone this repository:
+
+
+```
+cd ~/workspace
+git clone https://github.com/osrf/filament_playground.git
+cd filament_playground
+```
+
+Add the new model assets to Filament:
+
+```
+cp -r assets/* ~/workspace/filament/assets/
+```
+
+Copy our modified `suzanne` example and `CMakeLists.txt`:
+
+```
+cp samples/* ~/workspace/filament/samples/
+```
+
+Now, let's compile the `suzanne` example:
+
+```
+cd ~/workspace/filament
+./build.sh release suzanne
+```
+
+And now you can run it:
+
+```
+./out/cmake-release/samples/suzanne
+```
+
+![A modified sample](images/modified_suzane.png)
+
+### Note about meshes
+
 As far as I see the only mesh formats supported are `obj` and `fbx`. These
 formats are supported by a tool named `filamesh`, which seems to convert from
 a few mesh formats to a binary representation used in Filament.
