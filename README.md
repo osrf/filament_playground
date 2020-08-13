@@ -38,4 +38,13 @@ References:
 
 ## Creating a custom scene
 
-As far as I see they only mesh formats supported are `obj` and `fbx`.
+As far as I see the only mesh formats supported are `obj` and `fbx`. These
+formats are supported by a tool named `filamesh`, which seems to convert from
+a few mesh formats to a binary representation used in Filament.
+
+See [filamesh README.md](https://github.com/google/filament/tree/main/tools/filamesh). See also [this related issue](https://github.com/google/filament/issues/2634).
+
+
+## Other resources
+
+[External example](https://github.com/cgmb/hello-filament/blob/master/CMakeLists.txt) showing how to link your demo against Filament.
