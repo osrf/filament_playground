@@ -53,7 +53,7 @@ struct App {
     Texture* normal;
     Texture* roughness;
     Texture* metallic;
-    Texture* ao;
+//    Texture* ao;
 };
 
 static const char* IBL_FOLDER = "default_env";
@@ -88,23 +88,28 @@ int main(int argc, char** argv) {
 
         // Create textures. The KTX bundles are freed by KtxUtility.
         auto albedo = new image::KtxBundle(VALVE_ALBEDO_S3TC_DATA, VALVE_ALBEDO_S3TC_SIZE);
-        auto ao = new image::KtxBundle(VALVE_AO_DATA, VALVE_AO_SIZE);
+//        auto ao = new image::KtxBundle(VALVE_AO_DATA, VALVE_AO_SIZE);
         auto metallic = new image::KtxBundle(VALVE_METALLIC_DATA, VALVE_METALLIC_SIZE);
         auto roughness = new image::KtxBundle(VALVE_ROUGHNESS_DATA, VALVE_ROUGHNESS_SIZE);
         app.albedo = ktx::createTexture(engine, albedo, true);
-        app.ao = ktx::createTexture(engine, ao, false);
+//        app.ao = ktx::createTexture(engine, ao, false);
         app.metallic = ktx::createTexture(engine, metallic, false);
         app.roughness = ktx::createTexture(engine, roughness, false);
         app.normal = loadNormalMap(engine, VALVE_NORMAL_DATA, VALVE_NORMAL_SIZE);
+//        TextureSampler sampler(TextureSampler::MinFilter::LINEAR_MIPMAP_LINEAR,
+//                TextureSampler::MagFilter::LINEAR);
         TextureSampler sampler(TextureSampler::MinFilter::LINEAR_MIPMAP_LINEAR,
-                TextureSampler::MagFilter::LINEAR);
+                TextureSampler::MagFilter::LINEAR,
+                TextureSampler::WrapMode::REPEAT);
+
 
         // Instantiate material.
         app.material = Material::Builder()
                 .package(RESOURCES_TEXTUREDLIT_DATA, RESOURCES_TEXTUREDLIT_SIZE).build(*engine);
         app.materialInstance = app.material->createInstance();
         app.materialInstance->setParameter("albedo", app.albedo, sampler);
-        app.materialInstance->setParameter("ao", app.ao, sampler);
+//        app.materialInstance->setParameter("ao", app.ao, sampler);
+//        app.materialInstance->setParameter("ambientOclussion", 1.0f);
         app.materialInstance->setParameter("metallic", app.metallic, sampler);
         app.materialInstance->setParameter("normal", app.normal, sampler);
         app.materialInstance->setParameter("roughness", app.roughness, sampler);
@@ -121,6 +126,16 @@ int main(int argc, char** argv) {
         rcm.setCastShadows(rcm.getInstance(app.mesh.renderable), false);
         scene->addEntity(app.mesh.renderable);
         tcm.setTransform(ti, app.transform);
+
+
+        utils::Entity light = utils::EntityManager::get().create();
+        LightManager::Builder(LightManager::Type::DIRECTIONAL)
+                .color(Color::toLinear<ACCURATE>({0.98f, 0.92f, 0.89f}))
+                .intensity(110000)
+                .direction({0.6, -1, -0.8})
+                .build(*engine, light);
+        scene->addEntity(light);
+
     };
 
     auto cleanup = [&app](Engine* engine, View*, Scene*) {
@@ -131,7 +146,7 @@ int main(int argc, char** argv) {
         engine->destroy(app.normal);
         engine->destroy(app.roughness);
         engine->destroy(app.metallic);
-        engine->destroy(app.ao);
+//        engine->destroy(app.ao);
     };
 
     FilamentApp::get().run(config, setup, cleanup);
