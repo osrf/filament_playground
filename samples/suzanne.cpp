@@ -38,6 +38,10 @@
 #include <stb_image.h>
 
 #include "generated/resources/resources.h"
+#include "generated/resources/drill.h"
+#include "generated/resources/extinguisher.h"
+#include "generated/resources/rescue_randy.h"
+#include "generated/resources/pump.h"
 #include "generated/resources/valve.h"
 
 using namespace filament;
@@ -53,10 +57,9 @@ struct App {
     Texture* normal;
     Texture* roughness;
     Texture* metallic;
-//    Texture* ao;
 };
 
-static const char* IBL_FOLDER = "default_env";
+static const char* IBL_FOLDER = "venetian_crossroads_2k";
 
 static Texture* loadNormalMap(Engine* engine, const uint8_t* normals, size_t nbytes) {
     int w, h, n;
@@ -80,53 +83,147 @@ int main(int argc, char** argv) {
     config.title = "suzanne";
     config.iblDirectory = FilamentApp::getRootAssetsPath() + IBL_FOLDER;
 
-    App app;
-    auto setup = [config, &app](Engine* engine, View* view, Scene* scene) {
+    App drillApp;
+    App valveApp;
+    App extinguisherApp;
+    App rescueRandyApp;
+    App pumpApp;
+    auto setup = [config, &valveApp, &drillApp, &extinguisherApp, &rescueRandyApp, &pumpApp](Engine* engine, View* view, Scene* scene) {
         auto& tcm = engine->getTransformManager();
         auto& rcm = engine->getRenderableManager();
         auto& em = utils::EntityManager::get();
 
         // Create textures. The KTX bundles are freed by KtxUtility.
-        auto albedo = new image::KtxBundle(VALVE_ALBEDO_S3TC_DATA, VALVE_ALBEDO_S3TC_SIZE);
-//        auto ao = new image::KtxBundle(VALVE_AO_DATA, VALVE_AO_SIZE);
-        auto metallic = new image::KtxBundle(VALVE_METALLIC_DATA, VALVE_METALLIC_SIZE);
-        auto roughness = new image::KtxBundle(VALVE_ROUGHNESS_DATA, VALVE_ROUGHNESS_SIZE);
-        app.albedo = ktx::createTexture(engine, albedo, true);
-//        app.ao = ktx::createTexture(engine, ao, false);
-        app.metallic = ktx::createTexture(engine, metallic, false);
-        app.roughness = ktx::createTexture(engine, roughness, false);
-        app.normal = loadNormalMap(engine, VALVE_NORMAL_DATA, VALVE_NORMAL_SIZE);
-//        TextureSampler sampler(TextureSampler::MinFilter::LINEAR_MIPMAP_LINEAR,
-//                TextureSampler::MagFilter::LINEAR);
+        auto valve_albedo = new image::KtxBundle(VALVE_VALVE_ALBEDO_S3TC_DATA, VALVE_VALVE_ALBEDO_S3TC_SIZE);
+        auto valve_metallic = new image::KtxBundle(VALVE_VALVE_METALLIC_DATA, VALVE_VALVE_METALLIC_SIZE);
+        auto valve_roughness = new image::KtxBundle(VALVE_VALVE_ROUGHNESS_DATA, VALVE_VALVE_ROUGHNESS_SIZE);
+        valveApp.albedo = ktx::createTexture(engine, valve_albedo, true);
+        valveApp.metallic = ktx::createTexture(engine, valve_metallic, false);
+        valveApp.roughness = ktx::createTexture(engine, valve_roughness, false);
+        valveApp.normal = loadNormalMap(engine, VALVE_VALVE_NORMAL_DATA, VALVE_VALVE_NORMAL_SIZE);
+
+        auto drill_albedo = new image::KtxBundle(DRILL_DRILL_ALBEDO_S3TC_DATA, DRILL_DRILL_ALBEDO_S3TC_SIZE);
+        auto drill_metallic = new image::KtxBundle(DRILL_DRILL_METALLIC_DATA, DRILL_DRILL_METALLIC_SIZE);
+        auto drill_roughness = new image::KtxBundle(DRILL_DRILL_ROUGHNESS_DATA, DRILL_DRILL_ROUGHNESS_SIZE);
+        drillApp.albedo = ktx::createTexture(engine, drill_albedo, true);
+        drillApp.metallic = ktx::createTexture(engine, drill_metallic, false);
+        drillApp.roughness = ktx::createTexture(engine, drill_roughness, false);
+        drillApp.normal = loadNormalMap(engine, DRILL_DRILL_NORMAL_DATA, DRILL_DRILL_NORMAL_SIZE);
+
+        auto extinguisher_albedo = new image::KtxBundle(EXTINGUISHER_EXTINGUISHER_ALBEDO_S3TC_DATA, EXTINGUISHER_EXTINGUISHER_ALBEDO_S3TC_SIZE);
+        auto extinguisher_metallic = new image::KtxBundle(EXTINGUISHER_EXTINGUISHER_METALLIC_DATA, EXTINGUISHER_EXTINGUISHER_METALLIC_SIZE);
+        auto extinguisher_roughness = new image::KtxBundle(EXTINGUISHER_EXTINGUISHER_ROUGHNESS_DATA, EXTINGUISHER_EXTINGUISHER_ROUGHNESS_SIZE);
+        extinguisherApp.albedo = ktx::createTexture(engine, extinguisher_albedo, true);
+        extinguisherApp.metallic = ktx::createTexture(engine, extinguisher_metallic, false);
+        extinguisherApp.roughness = ktx::createTexture(engine, extinguisher_roughness, false);
+        extinguisherApp.normal = loadNormalMap(engine, EXTINGUISHER_EXTINGUISHER_NORMAL_DATA, EXTINGUISHER_EXTINGUISHER_NORMAL_SIZE);
+
+        auto rescue_randy_albedo = new image::KtxBundle(RESCUE_RANDY_RESCUE_RANDY_ALBEDO_S3TC_DATA, RESCUE_RANDY_RESCUE_RANDY_ALBEDO_S3TC_SIZE);
+        auto rescue_randy_metallic = new image::KtxBundle(RESCUE_RANDY_RESCUE_RANDY_METALLIC_DATA, RESCUE_RANDY_RESCUE_RANDY_METALLIC_SIZE);
+        auto rescue_randy_roughness = new image::KtxBundle(RESCUE_RANDY_RESCUE_RANDY_ROUGHNESS_DATA, RESCUE_RANDY_RESCUE_RANDY_ROUGHNESS_SIZE);
+        rescueRandyApp.albedo = ktx::createTexture(engine, rescue_randy_albedo, true);
+        rescueRandyApp.metallic = ktx::createTexture(engine, rescue_randy_metallic, false);
+        rescueRandyApp.roughness = ktx::createTexture(engine, rescue_randy_roughness, false);
+        rescueRandyApp.normal = loadNormalMap(engine, RESCUE_RANDY_RESCUE_RANDY_NORMAL_DATA, RESCUE_RANDY_RESCUE_RANDY_NORMAL_SIZE);
+
+        auto pump_albedo = new image::KtxBundle(PUMP_PUMP_ALBEDO_S3TC_DATA, PUMP_PUMP_ALBEDO_S3TC_SIZE);
+        auto pump_metallic = new image::KtxBundle(PUMP_PUMP_METALLIC_DATA, PUMP_PUMP_METALLIC_SIZE);
+        auto pump_roughness = new image::KtxBundle(PUMP_PUMP_ROUGHNESS_DATA, PUMP_PUMP_ROUGHNESS_SIZE);
+        pumpApp.albedo = ktx::createTexture(engine, pump_albedo, true);
+        pumpApp.metallic = ktx::createTexture(engine, pump_metallic, false);
+        pumpApp.roughness = ktx::createTexture(engine, pump_roughness, false);
+        pumpApp.normal = loadNormalMap(engine, PUMP_PUMP_NORMAL_DATA, PUMP_PUMP_NORMAL_SIZE);
+
         TextureSampler sampler(TextureSampler::MinFilter::LINEAR_MIPMAP_LINEAR,
                 TextureSampler::MagFilter::LINEAR,
                 TextureSampler::WrapMode::REPEAT);
 
-
         // Instantiate material.
-        app.material = Material::Builder()
+        valveApp.material = Material::Builder()
                 .package(RESOURCES_TEXTUREDLIT_DATA, RESOURCES_TEXTUREDLIT_SIZE).build(*engine);
-        app.materialInstance = app.material->createInstance();
-        app.materialInstance->setParameter("albedo", app.albedo, sampler);
-//        app.materialInstance->setParameter("ao", app.ao, sampler);
-//        app.materialInstance->setParameter("ambientOclussion", 1.0f);
-        app.materialInstance->setParameter("metallic", app.metallic, sampler);
-        app.materialInstance->setParameter("normal", app.normal, sampler);
-        app.materialInstance->setParameter("roughness", app.roughness, sampler);
+        valveApp.materialInstance = valveApp.material->createInstance();
+        valveApp.materialInstance->setParameter("albedo", valveApp.albedo, sampler);
+        valveApp.materialInstance->setParameter("metallic", valveApp.metallic, sampler);
+        valveApp.materialInstance->setParameter("normal", valveApp.normal, sampler);
+        valveApp.materialInstance->setParameter("roughness", valveApp.roughness, sampler);
+
+        drillApp.material = Material::Builder()
+                .package(RESOURCES_TEXTUREDLIT_DATA, RESOURCES_TEXTUREDLIT_SIZE).build(*engine);
+        drillApp.materialInstance = valveApp.material->createInstance();
+        drillApp.materialInstance->setParameter("albedo", drillApp.albedo, sampler);
+        drillApp.materialInstance->setParameter("metallic", drillApp.metallic, sampler);
+        drillApp.materialInstance->setParameter("normal", drillApp.normal, sampler);
+        drillApp.materialInstance->setParameter("roughness", drillApp.roughness, sampler);
+
+        extinguisherApp.material = Material::Builder()
+                .package(RESOURCES_TEXTUREDLIT_DATA, RESOURCES_TEXTUREDLIT_SIZE).build(*engine);
+        extinguisherApp.materialInstance = extinguisherApp.material->createInstance();
+        extinguisherApp.materialInstance->setParameter("albedo", extinguisherApp.albedo, sampler);
+        extinguisherApp.materialInstance->setParameter("metallic", extinguisherApp.metallic, sampler);
+        extinguisherApp.materialInstance->setParameter("normal", extinguisherApp.normal, sampler);
+        extinguisherApp.materialInstance->setParameter("roughness", extinguisherApp.roughness, sampler);
+
+        rescueRandyApp.material = Material::Builder()
+                .package(RESOURCES_TEXTUREDLIT_DATA, RESOURCES_TEXTUREDLIT_SIZE).build(*engine);
+        rescueRandyApp.materialInstance = rescueRandyApp.material->createInstance();
+        rescueRandyApp.materialInstance->setParameter("albedo", rescueRandyApp.albedo, sampler);
+        rescueRandyApp.materialInstance->setParameter("metallic", rescueRandyApp.metallic, sampler);
+        rescueRandyApp.materialInstance->setParameter("normal", rescueRandyApp.normal, sampler);
+        rescueRandyApp.materialInstance->setParameter("roughness", rescueRandyApp.roughness, sampler);
+
+        pumpApp.material = Material::Builder()
+                .package(RESOURCES_TEXTUREDLIT_DATA, RESOURCES_TEXTUREDLIT_SIZE).build(*engine);
+        pumpApp.materialInstance = pumpApp.material->createInstance();
+        pumpApp.materialInstance->setParameter("albedo", pumpApp.albedo, sampler);
+        pumpApp.materialInstance->setParameter("metallic", pumpApp.metallic, sampler);
+        pumpApp.materialInstance->setParameter("normal", pumpApp.normal, sampler);
+        pumpApp.materialInstance->setParameter("roughness", pumpApp.roughness, sampler);
 
         auto ibl = FilamentApp::get().getIBL()->getIndirectLight();
         ibl->setIntensity(100000);
         ibl->setRotation(mat3f::rotation(0.5f, float3{ 0, 1, 0 }));
 
         // Add geometry into the scene.
-        app.mesh = filamesh::MeshReader::loadMeshFromBuffer(engine, VALVE_SUZANNE_DATA, nullptr,
-                nullptr, app.materialInstance);
-        auto ti = tcm.getInstance(app.mesh.renderable);
-        app.transform = mat4f{ mat3f(1), float3(0, 0, -4) } * tcm.getWorldTransform(ti);
-        rcm.setCastShadows(rcm.getInstance(app.mesh.renderable), false);
-        scene->addEntity(app.mesh.renderable);
-        tcm.setTransform(ti, app.transform);
+        valveApp.mesh = filamesh::MeshReader::loadMeshFromBuffer(engine, VALVE_VALVE_DATA, nullptr,
+                nullptr, valveApp.materialInstance);
+        auto valve_ti = tcm.getInstance(valveApp.mesh.renderable);
+        valveApp.transform = mat4f{ mat3f(1), float3(3, 0, -4) } * tcm.getWorldTransform(valve_ti);
+        rcm.setCastShadows(rcm.getInstance(valveApp.mesh.renderable), false);
+        scene->addEntity(valveApp.mesh.renderable);
+        tcm.setTransform(valve_ti, valveApp.transform);
 
+        drillApp.mesh = filamesh::MeshReader::loadMeshFromBuffer(engine, DRILL_DRILL_DATA, nullptr,
+                nullptr, drillApp.materialInstance);
+        auto drill_ti = tcm.getInstance(drillApp.mesh.renderable);
+        drillApp.transform = mat4f{ mat3f(1), float3(0, 0, -4) } * tcm.getWorldTransform(drill_ti);
+        rcm.setCastShadows(rcm.getInstance(drillApp.mesh.renderable), false);
+        scene->addEntity(drillApp.mesh.renderable);
+        tcm.setTransform(drill_ti, drillApp.transform);
+
+        extinguisherApp.mesh = filamesh::MeshReader::loadMeshFromBuffer(engine, EXTINGUISHER_EXTINGUISHER_DATA, nullptr,
+                nullptr, extinguisherApp.materialInstance);
+        auto extinguisher_ti = tcm.getInstance(extinguisherApp.mesh.renderable);
+        extinguisherApp.transform = mat4f{ mat3f(1), float3(1, 0, -4) } * tcm.getWorldTransform(extinguisher_ti);
+        rcm.setCastShadows(rcm.getInstance(extinguisherApp.mesh.renderable), false);
+        scene->addEntity(extinguisherApp.mesh.renderable);
+        tcm.setTransform(extinguisher_ti, extinguisherApp.transform);
+
+        rescueRandyApp.mesh = filamesh::MeshReader::loadMeshFromBuffer(engine, RESCUE_RANDY_RESCUE_RANDY_DATA, nullptr,
+                nullptr, rescueRandyApp.materialInstance);
+        auto rescue_randy_ti = tcm.getInstance(rescueRandyApp.mesh.renderable);
+        rescueRandyApp.transform = mat4f{ mat3f(1), float3(2, 0, -4) } * tcm.getWorldTransform(rescue_randy_ti);
+        rcm.setCastShadows(rcm.getInstance(rescueRandyApp.mesh.renderable), false);
+        scene->addEntity(rescueRandyApp.mesh.renderable);
+        tcm.setTransform(rescue_randy_ti, rescueRandyApp.transform);
+
+        pumpApp.mesh = filamesh::MeshReader::loadMeshFromBuffer(engine, PUMP_PUMP_DATA, nullptr,
+                nullptr, pumpApp.materialInstance);
+        auto pump_ti = tcm.getInstance(pumpApp.mesh.renderable);
+        // pumpApp.transform = mat4f{ mat3f(1), float3(4, 0, -4) } * tcm.getWorldTransform(pump_ti);
+        pumpApp.transform = mat4f::translation(float3{ 4, 0, -4, }) * mat4f::rotation(1.57, float3{ 0, 1, 0 });
+        rcm.setCastShadows(rcm.getInstance(pumpApp.mesh.renderable), false);
+        scene->addEntity(pumpApp.mesh.renderable);
+        tcm.setTransform(pump_ti, pumpApp.transform);
 
         utils::Entity light = utils::EntityManager::get().create();
         LightManager::Builder(LightManager::Type::DIRECTIONAL)
@@ -138,15 +235,46 @@ int main(int argc, char** argv) {
 
     };
 
-    auto cleanup = [&app](Engine* engine, View*, Scene*) {
-        engine->destroy(app.materialInstance);
-        engine->destroy(app.mesh.renderable);
-        engine->destroy(app.material);
-        engine->destroy(app.albedo);
-        engine->destroy(app.normal);
-        engine->destroy(app.roughness);
-        engine->destroy(app.metallic);
-//        engine->destroy(app.ao);
+    auto cleanup = [&valveApp, &drillApp, &extinguisherApp, &rescueRandyApp, &pumpApp](Engine* engine, View*, Scene*) {
+        engine->destroy(valveApp.materialInstance);
+        engine->destroy(valveApp.mesh.renderable);
+        engine->destroy(valveApp.material);
+        engine->destroy(valveApp.albedo);
+        engine->destroy(valveApp.normal);
+        engine->destroy(valveApp.roughness);
+        engine->destroy(valveApp.metallic);
+
+        engine->destroy(drillApp.materialInstance);
+        engine->destroy(drillApp.mesh.renderable);
+        engine->destroy(drillApp.material);
+        engine->destroy(drillApp.albedo);
+        engine->destroy(drillApp.normal);
+        engine->destroy(drillApp.roughness);
+        engine->destroy(drillApp.metallic);
+
+        engine->destroy(extinguisherApp.materialInstance);
+        engine->destroy(extinguisherApp.mesh.renderable);
+        engine->destroy(extinguisherApp.material);
+        engine->destroy(extinguisherApp.albedo);
+        engine->destroy(extinguisherApp.normal);
+        engine->destroy(extinguisherApp.roughness);
+        engine->destroy(extinguisherApp.metallic);
+
+        engine->destroy(rescueRandyApp.materialInstance);
+        engine->destroy(rescueRandyApp.mesh.renderable);
+        engine->destroy(rescueRandyApp.material);
+        engine->destroy(rescueRandyApp.albedo);
+        engine->destroy(rescueRandyApp.normal);
+        engine->destroy(rescueRandyApp.roughness);
+        engine->destroy(rescueRandyApp.metallic);
+
+        engine->destroy(pumpApp.materialInstance);
+        engine->destroy(pumpApp.mesh.renderable);
+        engine->destroy(pumpApp.material);
+        engine->destroy(pumpApp.albedo);
+        engine->destroy(pumpApp.normal);
+        engine->destroy(pumpApp.roughness);
+        engine->destroy(pumpApp.metallic);
     };
 
     FilamentApp::get().run(config, setup, cleanup);

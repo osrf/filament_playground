@@ -104,7 +104,7 @@ function(add_envmap SOURCE TARGET)
         COMMENT "Generating environment map ${target_envmap}")
 endfunction()
 
-add_envmap("third_party/environments/lightroom_14b.hdr" "default_env")
+add_envmap("third_party/environments/venetian_crossroads_2k.hdr" "venetian_crossroads_2k")
 
 # ==================================================================================================
 # Build suzanne resources
@@ -145,28 +145,27 @@ endfunction()
 
 #add_mesh("assets/models/monkey/monkey.obj" "suzanne.filamesh")
 
-# caguero testing
-add_mesh("assets/models/valve/valve.obj" "suzanne.filamesh")
-add_ktxfiles("assets/models/valve/valve_albedo.png" "albedo_s3tc.ktx" "--compression=s3tc_rgb_dxt1")
-add_ktxfiles("assets/models/valve/valve_roughness.png" "roughness.ktx" "--grayscale")
-add_ktxfiles("assets/models/valve/valve_metalness.png" "metallic.ktx" "--grayscale")
-add_pngfile("assets/models/valve/valve_normal.png" "normal.png")
-# caguero testing
+# Drill.
+add_mesh("assets/models/drill/drillobj.obj" "drill.filamesh")
+add_ktxfiles("assets/models/drill/drill_albedo.png" "drill_albedo_s3tc.ktx" "--compression=s3tc_rgb_dxt1")
+add_ktxfiles("assets/models/drill/drill_roughness.png" "drill_roughness.ktx" "--grayscale")
+add_ktxfiles("assets/models/drill/drill_metalness.png" "drill_metallic.ktx" "--grayscale")
+add_pngfile("assets/models/drill/drill_normal.png" "drill_normal.png")
 
-# add_ktxfiles("assets/models/monkey/albedo.png" "albedo_s3tc.ktx" "--compression=s3tc_rgb_dxt1")
-# add_ktxfiles("assets/models/monkey/roughness.png" "roughness.ktx" "--grayscale")
-# add_ktxfiles("assets/models/monkey/metallic.png" "metallic.ktx" "--grayscale")
-add_ktxfiles("assets/models/monkey/ao.png" "ao.ktx" "--grayscale")
-#
-# add_pngfile("assets/models/monkey/normal.png" "normal.png")
+set(DRILL_RESOURCE_FILES
+    ${TEXTURE_DIR}/drill_albedo_s3tc.ktx
+    ${TEXTURE_DIR}/drill_roughness.ktx
+    ${TEXTURE_DIR}/drill_metallic.ktx
+    ${TEXTURE_DIR}/drill_normal.png
+    ${RESOURCE_DIR}/drill.filamesh
+)
 
-get_resgen_vars(${RESOURCE_DIR} valve)
+get_resgen_vars(${RESOURCE_DIR} drill)
 
 add_custom_command(
-        OUTPUT ${RESGEN_OUTPUTS}
-        COMMAND resgen ${RESGEN_FLAGS} ${MONKEY_FILES}
-        DEPENDS resgen ${MONKEY_FILES}
-        COMMENT "Aggregating valve resources"
+    OUTPUT ${RESGEN_OUTPUTS}
+    COMMAND resgen ${RESGEN_FLAGS} ${DRILL_RESOURCE_FILES}
+    DEPENDS resgen ${DRILL_RESOURCE_FILES}
 )
 
 if (DEFINED RESGEN_SOURCE_FLAGS)
@@ -174,6 +173,272 @@ if (DEFINED RESGEN_SOURCE_FLAGS)
 endif()
 
 add_library(suzanne-resources ${DUMMY_SRC} ${RESGEN_SOURCE})
+
+
+# ==================================================================================================
+# Build valve resources
+# ==================================================================================================
+
+function(add_valve_ktxfiles SOURCE TARGET EXTRA_ARGS)
+    set(source_path "${ROOT_DIR}/${SOURCE}")
+    set(target_path "${TEXTURE_DIR}/${TARGET}")
+    set(VALVE_FILES ${VALVE_FILES} ${target_path} PARENT_SCOPE)
+    add_custom_command(
+        OUTPUT ${target_path}
+        COMMAND mipgen --quiet --strip-alpha ${EXTRA_ARGS} ${source_path} ${target_path}
+        MAIN_DEPENDENCY ${source_path}
+        DEPENDS mipgen
+        COMMENT "Generating mip levels for ${source_path}")
+endfunction()
+
+function(add_valve_pngfile SOURCE TARGET)
+    set(source_path "${ROOT_DIR}/${SOURCE}")
+    set(target_path "${TEXTURE_DIR}/${TARGET}")
+    set(VALVE_FILES ${VALVE_FILES} ${target_path} PARENT_SCOPE)
+    add_custom_command(
+        OUTPUT ${target_path}
+        COMMAND ${CMAKE_COMMAND} -E copy ${source_path} ${target_path}
+        MAIN_DEPENDENCY ${source_path})
+endfunction()
+
+function(add_valve_mesh SOURCE TARGET)
+    set(source_mesh "${ROOT_DIR}/${SOURCE}")
+    set(target_mesh "${RESOURCE_DIR}/${TARGET}")
+    set(VALVE_FILES ${MESH_BINS} ${target_mesh} PARENT_SCOPE)
+    add_custom_command(
+        OUTPUT ${target_mesh}
+        COMMAND filamesh --compress ${source_mesh} ${target_mesh}
+        MAIN_DEPENDENCY ${source_mesh}
+        DEPENDS filamesh)
+endfunction()
+
+# Valve.
+add_mesh("assets/models/valve/valve.obj" "valve.filamesh")
+add_ktxfiles("assets/models/valve/valve_albedo.png" "valve_albedo_s3tc.ktx" "--compression=s3tc_rgb_dxt1")
+add_ktxfiles("assets/models/valve/valve_roughness.png" "valve_roughness.ktx" "--grayscale")
+add_ktxfiles("assets/models/valve/valve_metalness.png" "valve_metallic.ktx" "--grayscale")
+add_pngfile("assets/models/valve/valve_normal.png" "valve_normal.png")
+
+set(VALVE_RESOURCE_FILES
+    ${TEXTURE_DIR}/valve_albedo_s3tc.ktx
+    ${TEXTURE_DIR}/valve_roughness.ktx
+    ${TEXTURE_DIR}/valve_metallic.ktx
+    ${TEXTURE_DIR}/valve_normal.png
+    ${RESOURCE_DIR}/valve.filamesh
+)
+
+get_resgen_vars(${RESOURCE_DIR} valve)
+
+add_custom_command(
+    OUTPUT ${RESGEN_OUTPUTS}
+    COMMAND resgen ${RESGEN_FLAGS} ${VALVE_RESOURCE_FILES}
+    DEPENDS resgen ${VALVE_RESOURCE_FILES}
+)
+
+if (DEFINED RESGEN_SOURCE_FLAGS)
+    set_source_files_properties(${RESGEN_SOURCE} PROPERTIES COMPILE_FLAGS ${RESGEN_SOURCE_FLAGS})
+endif()
+
+add_library(valve-resources ${DUMMY_SRC} ${RESGEN_SOURCE})
+
+# ==================================================================================================
+# Build extinguisher resources
+# ==================================================================================================
+
+function(add_extinguisher_ktxfiles SOURCE TARGET EXTRA_ARGS)
+    set(source_path "${ROOT_DIR}/${SOURCE}")
+    set(target_path "${TEXTURE_DIR}/${TARGET}")
+    set(EXTINGUISHER_FILES ${EXTINGUISHER_FILES} ${target_path} PARENT_SCOPE)
+    add_custom_command(
+        OUTPUT ${target_path}
+        COMMAND mipgen --quiet --strip-alpha ${EXTRA_ARGS} ${source_path} ${target_path}
+        MAIN_DEPENDENCY ${source_path}
+        DEPENDS mipgen
+        COMMENT "Generating mip levels for ${source_path}")
+endfunction()
+
+function(add_extinguisher_pngfile SOURCE TARGET)
+    set(source_path "${ROOT_DIR}/${SOURCE}")
+    set(target_path "${TEXTURE_DIR}/${TARGET}")
+    set(EXTINGUISHER_FILES ${EXTINGUISHER_FILES} ${target_path} PARENT_SCOPE)
+    add_custom_command(
+        OUTPUT ${target_path}
+        COMMAND ${CMAKE_COMMAND} -E copy ${source_path} ${target_path}
+        MAIN_DEPENDENCY ${source_path})
+endfunction()
+
+function(add_extinguisher_mesh SOURCE TARGET)
+    set(source_mesh "${ROOT_DIR}/${SOURCE}")
+    set(target_mesh "${RESOURCE_DIR}/${TARGET}")
+    set(EXTINGUISHER_FILES ${MESH_BINS} ${target_mesh} PARENT_SCOPE)
+    add_custom_command(
+        OUTPUT ${target_mesh}
+        COMMAND filamesh --compress ${source_mesh} ${target_mesh}
+        MAIN_DEPENDENCY ${source_mesh}
+        DEPENDS filamesh)
+endfunction()
+
+# Extinguisher.
+add_extinguisher_mesh("assets/models/extinguisher/extinguisher.obj" "extinguisher.filamesh")
+add_extinguisher_ktxfiles("assets/models/extinguisher/extinguisher_albedo.png" "extinguisher_albedo_s3tc.ktx" "--compression=s3tc_rgb_dxt1")
+add_extinguisher_ktxfiles("assets/models/extinguisher/extinguisher_roughness.png" "extinguisher_roughness.ktx" "--grayscale")
+add_extinguisher_ktxfiles("assets/models/extinguisher/extinguisher_metalness.png" "extinguisher_metallic.ktx" "--grayscale")
+add_extinguisher_pngfile("assets/models/extinguisher/extinguisher_normal.png" "extinguisher_normal.png")
+
+set(EXTINGUISHER_RESOURCE_FILES
+    ${TEXTURE_DIR}/extinguisher_albedo_s3tc.ktx
+    ${TEXTURE_DIR}/extinguisher_roughness.ktx
+    ${TEXTURE_DIR}/extinguisher_metallic.ktx
+    ${TEXTURE_DIR}/extinguisher_normal.png
+    ${RESOURCE_DIR}/extinguisher.filamesh
+)
+
+get_resgen_vars(${RESOURCE_DIR} extinguisher)
+
+add_custom_command(
+    OUTPUT ${RESGEN_OUTPUTS}
+    COMMAND resgen ${RESGEN_FLAGS} ${EXTINGUISHER_RESOURCE_FILES}
+    DEPENDS resgen ${EXTINGUISHER_RESOURCE_FILES}
+)
+
+if (DEFINED RESGEN_SOURCE_FLAGS)
+    set_source_files_properties(${RESGEN_SOURCE} PROPERTIES COMPILE_FLAGS ${RESGEN_SOURCE_FLAGS})
+endif()
+
+add_library(extinguisher-resources ${DUMMY_SRC} ${RESGEN_SOURCE})
+
+# ==================================================================================================
+# Build rescue_randy resources
+# ==================================================================================================
+
+function(add_rescue_randy_ktxfiles SOURCE TARGET EXTRA_ARGS)
+    set(source_path "${ROOT_DIR}/${SOURCE}")
+    set(target_path "${TEXTURE_DIR}/${TARGET}")
+    set(RESCUE_RANDY_FILES ${RESCUE_RANDY_FILES} ${target_path} PARENT_SCOPE)
+    add_custom_command(
+        OUTPUT ${target_path}
+        COMMAND mipgen --quiet --strip-alpha ${EXTRA_ARGS} ${source_path} ${target_path}
+        MAIN_DEPENDENCY ${source_path}
+        DEPENDS mipgen
+        COMMENT "Generating mip levels for ${source_path}")
+endfunction()
+
+function(add_rescue_randy_pngfile SOURCE TARGET)
+    set(source_path "${ROOT_DIR}/${SOURCE}")
+    set(target_path "${TEXTURE_DIR}/${TARGET}")
+    set(RESCUE_RANDY_FILES ${RESCUE_RANDY_FILES} ${target_path} PARENT_SCOPE)
+    add_custom_command(
+        OUTPUT ${target_path}
+        COMMAND ${CMAKE_COMMAND} -E copy ${source_path} ${target_path}
+        MAIN_DEPENDENCY ${source_path})
+endfunction()
+
+function(add_rescue_randy_mesh SOURCE TARGET)
+    set(source_mesh "${ROOT_DIR}/${SOURCE}")
+    set(target_mesh "${RESOURCE_DIR}/${TARGET}")
+    set(RESCUE_RANDY_FILES ${MESH_BINS} ${target_mesh} PARENT_SCOPE)
+    add_custom_command(
+        OUTPUT ${target_mesh}
+        COMMAND filamesh --compress ${source_mesh} ${target_mesh}
+        MAIN_DEPENDENCY ${source_mesh}
+        DEPENDS filamesh)
+endfunction()
+
+# Rescue randy.
+add_rescue_randy_mesh("assets/models/rescue_randy/rescue_randy.obj" "rescue_randy.filamesh")
+add_rescue_randy_ktxfiles("assets/models/rescue_randy/rescue_randy_albedo.png" "rescue_randy_albedo_s3tc.ktx" "--compression=s3tc_rgb_dxt1")
+add_rescue_randy_ktxfiles("assets/models/rescue_randy/rescue_randy_roughness.png" "rescue_randy_roughness.ktx" "--grayscale")
+add_rescue_randy_ktxfiles("assets/models/rescue_randy/rescue_randy_metalness.png" "rescue_randy_metallic.ktx" "--grayscale")
+add_rescue_randy_pngfile("assets/models/rescue_randy/rescue_randy_normal.png" "rescue_randy_normal.png")
+
+set(RESCUE_RANDY_RESOURCE_FILES
+    ${TEXTURE_DIR}/rescue_randy_albedo_s3tc.ktx
+    ${TEXTURE_DIR}/rescue_randy_roughness.ktx
+    ${TEXTURE_DIR}/rescue_randy_metallic.ktx
+    ${TEXTURE_DIR}/rescue_randy_normal.png
+    ${RESOURCE_DIR}/rescue_randy.filamesh
+)
+
+get_resgen_vars(${RESOURCE_DIR} rescue_randy)
+
+add_custom_command(
+    OUTPUT ${RESGEN_OUTPUTS}
+    COMMAND resgen ${RESGEN_FLAGS} ${RESCUE_RANDY_RESOURCE_FILES}
+    DEPENDS resgen ${RESCUE_RANDY_RESOURCE_FILES}
+)
+
+if (DEFINED RESGEN_SOURCE_FLAGS)
+    set_source_files_properties(${RESGEN_SOURCE} PROPERTIES COMPILE_FLAGS ${RESGEN_SOURCE_FLAGS})
+endif()
+
+add_library(rescue_randy-resources ${DUMMY_SRC} ${RESGEN_SOURCE})
+
+# ==================================================================================================
+# Build pump resources
+# ==================================================================================================
+
+function(add_pump_ktxfiles SOURCE TARGET EXTRA_ARGS)
+    set(source_path "${ROOT_DIR}/${SOURCE}")
+    set(target_path "${TEXTURE_DIR}/${TARGET}")
+    set(PUMP_FILES ${PUMP_FILES} ${target_path} PARENT_SCOPE)
+    add_custom_command(
+        OUTPUT ${target_path}
+        COMMAND mipgen --quiet --strip-alpha ${EXTRA_ARGS} ${source_path} ${target_path}
+        MAIN_DEPENDENCY ${source_path}
+        DEPENDS mipgen
+        COMMENT "Generating mip levels for ${source_path}")
+endfunction()
+
+function(add_pump_pngfile SOURCE TARGET)
+    set(source_path "${ROOT_DIR}/${SOURCE}")
+    set(target_path "${TEXTURE_DIR}/${TARGET}")
+    set(PUMP_FILES ${PUMP_FILES} ${target_path} PARENT_SCOPE)
+    add_custom_command(
+        OUTPUT ${target_path}
+        COMMAND ${CMAKE_COMMAND} -E copy ${source_path} ${target_path}
+        MAIN_DEPENDENCY ${source_path})
+endfunction()
+
+function(add_pump_mesh SOURCE TARGET)
+    set(source_mesh "${ROOT_DIR}/${SOURCE}")
+    set(target_mesh "${RESOURCE_DIR}/${TARGET}")
+    set(PUMP_FILES ${MESH_BINS} ${target_mesh} PARENT_SCOPE)
+    add_custom_command(
+        OUTPUT ${target_mesh}
+        COMMAND filamesh --compress ${source_mesh} ${target_mesh}
+        MAIN_DEPENDENCY ${source_mesh}
+        DEPENDS filamesh)
+endfunction()
+
+# Pump.
+add_pump_mesh("assets/models/pump/pump.obj" "pump.filamesh")
+add_pump_ktxfiles("assets/models/pump/pump_albedo.png" "pump_albedo_s3tc.ktx" "--compression=s3tc_rgb_dxt1")
+add_pump_ktxfiles("assets/models/pump/pump_roughness.png" "pump_roughness.ktx" "--grayscale")
+add_pump_ktxfiles("assets/models/pump/pump_metallic.png" "pump_metallic.ktx" "--grayscale")
+add_pump_pngfile("assets/models/pump/pump_normal.png" "pump_normal.png")
+
+set(PUMP_RESOURCE_FILES
+    ${TEXTURE_DIR}/pump_albedo_s3tc.ktx
+    ${TEXTURE_DIR}/pump_roughness.ktx
+    ${TEXTURE_DIR}/pump_metallic.ktx
+    ${TEXTURE_DIR}/pump_normal.png
+    ${RESOURCE_DIR}/pump.filamesh
+)
+
+get_resgen_vars(${RESOURCE_DIR} pump)
+
+add_custom_command(
+    OUTPUT ${RESGEN_OUTPUTS}
+    COMMAND resgen ${RESGEN_FLAGS} ${PUMP_RESOURCE_FILES}
+    DEPENDS resgen ${PUMP_RESOURCE_FILES}
+)
+
+if (DEFINED RESGEN_SOURCE_FLAGS)
+    set_source_files_properties(${RESGEN_SOURCE} PROPERTIES COMPILE_FLAGS ${RESGEN_SOURCE_FLAGS})
+endif()
+
+add_library(pump-resources ${DUMMY_SRC} ${RESGEN_SOURCE})
+
 
 # ==================================================================================================
 # Resources for gltf_viewer
@@ -253,7 +518,7 @@ if (NOT ANDROID)
     target_link_libraries(hellopbr PRIVATE filameshio suzanne-resources)
     target_link_libraries(sample_cloth PRIVATE filameshio)
     target_link_libraries(sample_normal_map PRIVATE filameshio)
-    target_link_libraries(suzanne PRIVATE filameshio suzanne-resources)
+    target_link_libraries(suzanne PRIVATE filameshio suzanne-resources valve-resources extinguisher-resources rescue_randy-resources pump-resources)
 
 endif()
 
