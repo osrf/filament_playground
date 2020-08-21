@@ -15,14 +15,19 @@
  */
 
 #include <filament/Engine.h>
+#include <filament/IndexBuffer.h>
 #include <filament/IndirectLight.h>
 #include <filament/LightManager.h>
 #include <filament/Material.h>
 #include <filament/RenderableManager.h>
 #include <filament/Scene.h>
+#include <filament/Skybox.h>
 #include <filament/TextureSampler.h>
 #include <filament/TransformManager.h>
+#include <filament/VertexBuffer.h>
 #include <filament/View.h>
+
+#include <math/norm.h>
 
 #include <utils/EntityManager.h>
 
@@ -48,6 +53,14 @@ using namespace filament;
 using namespace image;
 using namespace filament::math;
 
+struct GroundPlane {
+    VertexBuffer* vb;
+    IndexBuffer* ib;
+    Material* mat;
+    utils::Entity renderable;
+};
+
+
 struct App {
     Material* material;
     MaterialInstance* materialInstance;
@@ -58,6 +71,8 @@ struct App {
     Texture* roughness;
     Texture* metallic;
 };
+
+static GroundPlane createGroundPlane(Engine* engine);
 
 static const char* IBL_FOLDER = "venetian_crossroads_2k";
 
@@ -188,7 +203,7 @@ int main(int argc, char** argv) {
                 nullptr, valveApp.materialInstance);
         auto valve_ti = tcm.getInstance(valveApp.mesh.renderable);
         valveApp.transform = mat4f{ mat3f(1), float3(3, 0, -4) } * tcm.getWorldTransform(valve_ti);
-        rcm.setCastShadows(rcm.getInstance(valveApp.mesh.renderable), false);
+        rcm.setCastShadows(rcm.getInstance(valveApp.mesh.renderable), true);
         scene->addEntity(valveApp.mesh.renderable);
         tcm.setTransform(valve_ti, valveApp.transform);
 
@@ -196,7 +211,7 @@ int main(int argc, char** argv) {
                 nullptr, drillApp.materialInstance);
         auto drill_ti = tcm.getInstance(drillApp.mesh.renderable);
         drillApp.transform = mat4f{ mat3f(1), float3(0, 0, -4) } * tcm.getWorldTransform(drill_ti);
-        rcm.setCastShadows(rcm.getInstance(drillApp.mesh.renderable), false);
+        rcm.setCastShadows(rcm.getInstance(drillApp.mesh.renderable), true);
         scene->addEntity(drillApp.mesh.renderable);
         tcm.setTransform(drill_ti, drillApp.transform);
 
@@ -204,7 +219,7 @@ int main(int argc, char** argv) {
                 nullptr, extinguisherApp.materialInstance);
         auto extinguisher_ti = tcm.getInstance(extinguisherApp.mesh.renderable);
         extinguisherApp.transform = mat4f{ mat3f(1), float3(1, 0, -4) } * tcm.getWorldTransform(extinguisher_ti);
-        rcm.setCastShadows(rcm.getInstance(extinguisherApp.mesh.renderable), false);
+        rcm.setCastShadows(rcm.getInstance(extinguisherApp.mesh.renderable), true);
         scene->addEntity(extinguisherApp.mesh.renderable);
         tcm.setTransform(extinguisher_ti, extinguisherApp.transform);
 
@@ -212,7 +227,7 @@ int main(int argc, char** argv) {
                 nullptr, rescueRandyApp.materialInstance);
         auto rescue_randy_ti = tcm.getInstance(rescueRandyApp.mesh.renderable);
         rescueRandyApp.transform = mat4f{ mat3f(1), float3(2, 0, -4) } * tcm.getWorldTransform(rescue_randy_ti);
-        rcm.setCastShadows(rcm.getInstance(rescueRandyApp.mesh.renderable), false);
+        rcm.setCastShadows(rcm.getInstance(rescueRandyApp.mesh.renderable), true);
         scene->addEntity(rescueRandyApp.mesh.renderable);
         tcm.setTransform(rescue_randy_ti, rescueRandyApp.transform);
 
@@ -221,18 +236,53 @@ int main(int argc, char** argv) {
         auto pump_ti = tcm.getInstance(pumpApp.mesh.renderable);
         // pumpApp.transform = mat4f{ mat3f(1), float3(4, 0, -4) } * tcm.getWorldTransform(pump_ti);
         pumpApp.transform = mat4f::translation(float3{ 4, 0, -4, }) * mat4f::rotation(1.57, float3{ 0, 1, 0 });
-        rcm.setCastShadows(rcm.getInstance(pumpApp.mesh.renderable), false);
+        rcm.setCastShadows(rcm.getInstance(pumpApp.mesh.renderable), true);
         scene->addEntity(pumpApp.mesh.renderable);
         tcm.setTransform(pump_ti, pumpApp.transform);
 
         utils::Entity light = utils::EntityManager::get().create();
-        LightManager::Builder(LightManager::Type::DIRECTIONAL)
+        // LightManager::Builder(LightManager::Type::DIRECTIONAL)
+        LightManager::Builder(LightManager::Type::SUN)
                 .color(Color::toLinear<ACCURATE>({0.98f, 0.92f, 0.89f}))
                 .intensity(110000)
-                .direction({0.6, -1, -0.8})
+                .direction({0.2, -1, -0.8})
+                .sunAngularRadius(1.9f)
+                .castShadows(true)
                 .build(*engine, light);
         scene->addEntity(light);
 
+        // utils::Entity sp1 = utils::EntityManager::get().create();
+        // LightManager::Builder(LightManager::Type::SPOT)
+        //         .color(Color::toLinear<ACCURATE>(sRGBColor(0.9f, 0.9f, 0.9f)))
+        //         .intensity(110000.0f)
+        //         .position({ -3.0f, 8.0f, -1.5f })
+        //         .direction({ 0.0f, -1.0f, 0.0f })
+        //         .spotLightCone(static_cast<float>(M_PI / 8), static_cast<float>(1.5707))
+        //         .falloff(10.0f)
+        //         .castShadows(false)
+        //         .build(*engine, sp1);
+        // scene->addEntity(sp1);
+
+        // utils::Entity sp2 = utils::EntityManager::get().create();
+        // LightManager::Builder(LightManager::Type::SPOT)
+        //         .color(Color::toLinear<ACCURATE>(sRGBColor(0.98f, 0.12f, 0.19f)))
+        //         // .intensity(12000.0f, LightManager::EFFICIENCY_LED)
+        //         .intensity(110000.0f)
+        //         .position({ 7.0f, 8.0f, -1.5f })
+        //         .direction({ 0.0f, -1.0f, 0.0f })
+        //         .spotLightCone(static_cast<float>(M_PI / 8), static_cast<float>(1.5707))
+        //         .falloff(1.0f)
+        //         .castShadows(true)
+        //         .build(*engine, sp2);
+        // scene->addEntity(sp2);
+
+
+
+        Skybox *skybox = Skybox::Builder().color({0.5f,0.75f,1.0f,1.0f}).build(*engine);
+        scene->setSkybox(skybox);
+
+        GroundPlane plane = createGroundPlane(engine);
+        scene->addEntity(plane.renderable);
     };
 
     auto cleanup = [&valveApp, &drillApp, &extinguisherApp, &rescueRandyApp, &pumpApp](Engine* engine, View*, Scene*) {
@@ -277,7 +327,64 @@ int main(int argc, char** argv) {
         engine->destroy(pumpApp.metallic);
     };
 
+
+    // config.backend = Engine::Backend::VULKAN;
     FilamentApp::get().run(config, setup, cleanup);
 
     return 0;
+}
+
+static GroundPlane createGroundPlane(Engine* engine) {
+    Material* shadowMaterial = Material::Builder()
+        .package(RESOURCES_GROUNDSHADOW_DATA, RESOURCES_GROUNDSHADOW_SIZE)
+        .build(*engine);
+    shadowMaterial->setDefaultParameter("strength", 0.7f);
+
+    const static uint32_t indices[] {
+        0, 1, 2, 2, 3, 0
+    };
+    const static float3 vertices[] {
+        { -10, 0, -10 },
+        { -10, 0,  10 },
+        {  10, 0,  10 },
+        {  10, 0, -10 },
+    };
+    short4 tbn = packSnorm16(normalize(positive(mat3f{
+        float3{1.0f, 0.0f, 0.0f}, float3{0.0f, 0.0f, 1.0f}, float3{0.0f, 1.0f, 0.0f}
+    }.toQuaternion())).xyzw);
+    const static short4 normals[] { tbn, tbn, tbn, tbn };
+    VertexBuffer* vertexBuffer = VertexBuffer::Builder()
+        .vertexCount(4)
+        .bufferCount(2)
+        .attribute(VertexAttribute::POSITION, 0, VertexBuffer::AttributeType::FLOAT3)
+        .attribute(VertexAttribute::TANGENTS, 1, VertexBuffer::AttributeType::SHORT4)
+        .normalized(VertexAttribute::TANGENTS)
+        .build(*engine);
+    vertexBuffer->setBufferAt(*engine, 0, VertexBuffer::BufferDescriptor(
+            vertices, vertexBuffer->getVertexCount() * sizeof(vertices[0])));
+    vertexBuffer->setBufferAt(*engine, 1, VertexBuffer::BufferDescriptor(
+            normals, vertexBuffer->getVertexCount() * sizeof(normals[0])));
+    IndexBuffer* indexBuffer = IndexBuffer::Builder().indexCount(6).build(*engine);
+    indexBuffer->setBuffer(*engine, IndexBuffer::BufferDescriptor(
+            indices, indexBuffer->getIndexCount() * sizeof(uint32_t)));
+
+    auto& em = utils::EntityManager::get();
+    utils::Entity renderable = em.create();
+    RenderableManager::Builder(1)
+        .boundingBox({{ 0, 0, 0 }, { 10, 1e-4f, 10 }})
+        .material(0, shadowMaterial->getDefaultInstance())
+        .geometry(0, RenderableManager::PrimitiveType::TRIANGLES, vertexBuffer, indexBuffer, 0, 6)
+        .culling(false)
+        .receiveShadows(true)
+        .castShadows(false)
+        .build(*engine, renderable);
+
+    auto& tcm = engine->getTransformManager();
+    tcm.setTransform(tcm.getInstance(renderable), mat4f::translation(float3{ 3, 0, -4 }));
+    return {
+        .vb = vertexBuffer,
+        .ib = indexBuffer,
+        .mat = shadowMaterial,
+        .renderable = renderable,
+    };
 }
