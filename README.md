@@ -2,6 +2,8 @@
 
 A place to play with Google Filament.
 
+[google.github.io/filament/](https://google.github.io/filament/)
+
 ## Filament installation
 
 Clone the Filament repository:
